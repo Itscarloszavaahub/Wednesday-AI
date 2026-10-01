@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wednesday AI | Asistente biomédico ético</title>
+<style>
+  :root{--bg:#f4f7fb;--card:#fff;--ink:#14213d;--muted:#5b6680;--brand:#0b7a75;--line:#dfe5ef;--ok:#1d8a4f;--mid:#c98a00;--high:#c0392b}
+  @media (prefers-color-scheme:dark){:root{--bg:#0f1424;--card:#1a2138;--ink:#eef1f8;--muted:#a6b0c8;--brand:#9c8cff;--line:#2c3556}}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--ink);line-height:1.5}
+  header{background:linear-gradient(135deg,#0b7a75,#1fa39a);color:#fff;padding:32px 20px;text-align:center}
+  header h1{margin:0 0 6px;font-size:1.9rem}
+  header p{margin:0;opacity:.92}
+  main{max-width:760px;margin:0 auto;padding:20px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;margin-bottom:18px}
+  h2{margin-top:0;font-size:1.15rem;color:var(--brand)}
+  label{display:block;font-weight:600;margin:14px 0 6px}
+  select,textarea{width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;font:inherit;background:var(--bg);color:var(--ink)}
+  textarea{min-height:110px;resize:vertical}
+  button{margin-top:16px;background:var(--brand);color:#fff;border:0;border-radius:10px;padding:12px 22px;font:inherit;font-weight:700;cursor:pointer}
+  button:hover{opacity:.9}
+  .flow{display:flex;gap:10px;flex-wrap:wrap;font-size:.9rem;color:var(--muted)}
+  .flow span{background:var(--bg);border:1px solid var(--line);border-radius:999px;padding:4px 12px}
+  .badge{display:inline-block;padding:6px 16px;border-radius:999px;color:#fff;font-weight:800}
+  .Bajo{background:var(--ok)}.Medio{background:var(--mid)}.Alto{background:var(--high)}
+  ul{padding-left:20px}
+  .err{color:var(--high);font-weight:600;margin-top:10px}
+  .hitl{border-left:4px solid var(--brand);padding-left:12px;margin-top:14px;font-weight:600}
+  footer{text-align:center;color:var(--muted);font-size:.82rem;padding:10px 20px 30px}
+  [hidden]{display:none}
+</style>
+</head>
+<body>
+<header>
+  <h1>Wednesday AI</h1>
+  <p>Diseña con seguridad, decide con criterio humano.</p>
+</header>
+<main>
+  <section class="card">
+    <h2>¿Cómo funciona esta app?</h2>
+    <div class="flow"><span>Entrada: describes tu diseño</span><span>→</span><span>Proceso: revisamos riesgos</span><span>→</span><span>Salida: nivel de riesgo y checklist</span></div>
+  </section>
+
+  <section class="card">
+    <h2>1. Describe tu diseño</h2>
+    <label for="tipo">Tipo de dispositivo</label>
+    <select id="tipo">
+      <option value="">Selecciona…</option>
+      <option value="protesis">Prótesis / órtesis</option>
+      <option value="monitor">Monitor o sensor</option>
+      <option value="implante">Implante</option>
+      <option value="instrumental">Instrumental clínico</option>
+    </select>
+    <label for="contacto">Contacto con el paciente</label>
+    <select id="contacto">
+      <option value="">Selecciona…</option>
+      <option value="0">Sin contacto</option>
+      <option value="1">Contacto con piel</option>
+      <option value="2">Contacto con tejido interno o sangre</option>
+      <option value="3">Permanece dentro del cuerpo</option>
+    </select>
+    <label for="desc">Describe brevemente el diseño y su función</label>
+    <textarea id="desc" placeholder="Ej: Prótesis de mano con motor y batería recargable para adultos…"></textarea>
+    <button id="btn" type="button">Analizar diseño</button>
+    <div id="err" class="err" role="alert"></div>
+  </section>
+
+  <section class="card" id="salida" hidden aria-live="polite">
+    <h2>2. Resultado del análisis</h2>
+    <p>Nivel de riesgo preliminar: <span id="nivel" class="badge"></span></p>
+    <p id="resumen"></p>
+    <strong>Checklist recomendado antes de avanzar:</strong>
+    <ul id="lista"></ul>
+    <p class="hitl">Decisión final: un profesional de la salud o ingeniero biomédico debe revisar y aprobar este diseño. Wednesday AI solo sugiere.</p>
+    <p id="bienestar"></p>
+  </section>
+</main>
+<footer>Prototipo académico. Tec de Monterrey · PT5006 IA para Jóvenes Líderes · Grupo 480. No sustituye una evaluación clínica ni regulatoria real.</footer>
+
+<script>
+  var $ = function(id){ return document.getElementById(id); };
+
+  function analizar(){
+    var tipo = $("tipo").value;
+    var contacto = $("contacto").value;
+    var desc = $("desc").value.trim().toLowerCase();
+    $("err").textContent = "";
+
+    if(!tipo || contacto === "" || desc.length < 15){
+      $("salida").hidden = true;
+      $("err").textContent = "Completa el tipo, el contacto y una descripción de al menos 15 caracteres.";
+      return;
+    }
+
+    var puntos = parseInt(contacto, 10);
+    var lista = ["Revisión y aprobación final por un humano calificado, porfavor de hacer."];
+
+    if(tipo === "implante"){ puntos += 2; }
+    if(tipo === "protesis"){ puntos += 1; }
+
+    if(/bater[ií]a|el[eé]ctric|motor|voltaje|carga/.test(desc)){
+      puntos += 1;
+      lista.push("Pruebas de seguridad eléctrica y protección contra sobrecalentamiento.");
+    }
+    if(/software|algoritmo|\bia\b|inteligencia|autom[aá]tic/.test(desc)){
+      puntos += 1;
+      lista.push("Validar el software con casos de prueba y documentar sesgos y límites.");
+    }
+    if(/ni[ñn]o|pedi[aá]tric|adulto mayor|beb[eé]/.test(desc)){
+      puntos += 1;
+      lista.push("Considerar población vulnerable: ajustar tallas, materiales y consentimiento.");
+    }
+    if(/pl[aá]stic|metal|titanio|silicona|polímero|polimero|material/.test(desc)){
+      lista.push("Confirmar biocompatibilidad de los materiales con fichas técnicas.");
+    }
+    if(contacto !== "0"){
+      lista.push("Definir método de limpieza o esterilización y su frecuencia.");
+    }
+    lista.push("Registrar pruebas realizadas, errores encontrados y correcciones (aprender del error).");
+
+    var nivel = puntos >= 4 ? "Alto" : (puntos >= 3 ? "Medio" : "Bajo");
+    var resumenes = {
+      Bajo: "El diseño muestra pocos factores de riesgo al paciente. Aun así, conviene validar cada punto del checklist.",
+      Medio: "Hay factores que requieren pruebas específicas antes de un prototipo con personas.",
+      Alto: "Hay varios factores críticos. No avances sin revisión experta y pruebas rigurosas."
+    };
+
+    $("nivel").textContent = nivel;
+    $("nivel").className = "badge " + nivel;
+    $("resumen").textContent = resumenes[nivel];
+    $("lista").innerHTML = "";
+    lista.forEach(function(t){
+      var li = document.createElement("li");
+      li.textContent = t;
+      $("lista").appendChild(li);
+    });
+    $("bienestar").textContent = nivel === "Alto"
+      ? "Recordatorio de equipo: un diseño de alto riesgo genera presión. Tomen pausas y hablen de cómo se sienten antes de decidir."
+      : "Recordatorio de equipo: cuidar el bienestar de quienes diseñan también protege a los pacientes.";
+    $("salida").hidden = false;
+  }
+
+  $("btn").addEventListener("click", analizar);
+</script>
+</body>
+</html>
